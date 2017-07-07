@@ -1,6 +1,9 @@
-#[derive(Debug, Copy, Clone)]
-pub enum Error {
-    UnknownError
+
+pub type Result<T> = std::result::Result<T, TreeError>;
+
+pub enum TreeError {
+    /// Try to append sibling nodes to the root node
+    RootSiblingNode,
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+
