@@ -23,35 +23,6 @@ pub struct ArenaData<T> {
     data: T,
 }
 
-pub trait Node<T> {
-    /// Create a tree based on the given root node and capacity
-    fn new(data: T, capacity: usize) -> Self;
-
-    /// Insert data to the left of the node, it does not need to be the first node
-    ///
-    /// Return new node
-    fn insert_left(&self, data: T) -> Self;
-
-    fn insert_left_items<I>(&self, data: I) where I: IntoIterator<Item=T>;
-
-
-    /// Add new node to left, return new sibling node
-    fn prepend_one(&self, data: T) -> Self;
-
-    fn prepend<I>(&self, data: I) where I: IntoIterator<Item=T>;
-    /// Add Return new node
-    fn append_child(&self, data: T) -> Self;
-
-    /// Return new node
-    fn prepend_child(&self, child_id: usize) {}
-
-    /// Return parent
-    fn delete_current(&self) -> Option<ArcNode<T>>;
-    fn delete_left(&self) -> Vec<T>;
-    fn delete_right(&self) -> Vec<T>;
-    fn delete_children(&self) -> Option<ArcNode<T>>;
-}
-
 
 // 调用示例
 
