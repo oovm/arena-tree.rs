@@ -25,14 +25,14 @@ where
     /// Create a tree based on the given root node and capacity
     fn new(data: T, capacity: usize) -> Self;
 
-    fn take(&self)
+    fn take(&self) -> Result<T, TreeError>
     where
         T: Default;
 
-    fn swap(&self, data: T);
+    fn swap(&self, data: &mut T);
 
     fn is_root(&self) -> bool {
-        self.parent().is_none()
+        self.parent().is_err()
     }
 
     fn root(&self) -> Self;
@@ -42,24 +42,24 @@ where
     fn parent(&self) -> Option<Self>;
 
     fn is_alone(&self) -> bool {
-        self.left().is_none() && self.right().is_none()
+        self.left().is_err() && self.right().is_err()
     }
 
     fn is_leftmost(&self) -> bool {
-        self.left().is_none()
+        self.left().is_err()
     }
 
-    fn left(&self) -> Option<Self>;
+    fn left(&self) -> Result<Self, TreeError>;
 
-    fn first_sibling(&self) -> Self;
+    fn first_sibling(&self) -> Result<Self, TreeError>;
 
     fn is_rightmost(&self) -> bool {
-        self.right().is_none()
+        self.right().is_err()
     }
 
-    fn right(&self) -> Option<Self>;
+    fn right(&self) -> Result<Self, TreeError>;
 
-    fn last_sibling(&self) -> Self;
+    fn last_sibling(&self) -> Result<Self, TreeError>;
 
     ///  Return new node
     fn insert_after(&self, data: T, after: &Self) -> Self;
@@ -72,15 +72,15 @@ where
     /// Return new node
     fn insert_left(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Some(s) => Ok(s.insert_before(data, self)),
-            None => Err(TreeError::RootSiblingNode),
+            Ok(s) => Ok(s.insert_before(data, self)),
+            Err(_) => Err(TreeError::RootSiblingOperation),
         }
     }
 
     fn insert_right(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Some(s) => Ok(s.insert_after(data, self)),
-            None => Err(TreeError::RootSiblingNode),
+            Ok(s) => Ok(s.insert_after(data, self)),
+            Err(_) => Err(TreeError::RootSiblingOperation),
         }
     }
     fn has_child(&self) -> bool {
