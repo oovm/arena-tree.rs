@@ -32,7 +32,7 @@ where
     fn swap(&self, data: &mut T);
 
     fn is_root(&self) -> bool {
-        self.parent().is_err()
+        self.parent().is_none()
     }
 
     fn root(&self) -> Self;
@@ -42,27 +42,27 @@ where
     fn parent(&self) -> Option<Self>;
 
     fn is_alone(&self) -> bool {
-        self.left().is_err() && self.right().is_err()
+        self.left().is_none() && self.right().is_none()
     }
 
     fn is_leftmost(&self) -> bool {
-        self.left().is_err()
+        self.left().is_none()
     }
 
-    fn left(&self) -> Result<Self, TreeError>;
+    fn left(&self) -> Option<Self>;
 
     fn first_sibling(&self) -> Result<Self, TreeError>;
 
     fn is_rightmost(&self) -> bool {
-        self.right().is_err()
+        self.right().is_none()
     }
 
-    fn right(&self) -> Result<Self, TreeError>;
+    fn right(&self) -> Option<Self>;
 
     fn last_sibling(&self) -> Result<Self, TreeError>;
 
     ///  Return new node
-    fn insert_after(&self, data: T, after: &Self) -> Self;
+    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError>;
 
     /// Return new node
     fn insert_before(&self, data: T, before: &Self) -> Self;
@@ -72,15 +72,15 @@ where
     /// Return new node
     fn insert_left(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Ok(s) => Ok(s.insert_before(data, self)),
-            Err(_) => Err(TreeError::RootSiblingOperation),
+            Some(s) => Ok(s.insert_before(data, self)),
+            None => Err(TreeError::RootSiblingOperation),
         }
     }
 
     fn insert_right(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Ok(s) => Ok(s.insert_after(data, self)),
-            Err(_) => Err(TreeError::RootSiblingOperation),
+            Some(s) => s.insert_after(data, self),
+            None => Err(TreeError::RootSiblingOperation),
         }
     }
     fn has_child(&self) -> bool {

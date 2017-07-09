@@ -1,12 +1,15 @@
+mod children;
+
+pub use self::children::{Ancestors, Children, Descendants, Siblings};
+
 use crate::{
     traits::{DeleteNodes, TraversalOrder, TreeNode},
     TreeError,
 };
 use std::{
     mem::{swap, take},
-    sync::{Arc, Mutex},
+    sync::{Arc, LockResult, Mutex},
 };
-use std::sync::LockResult;
 
 // need debug
 pub struct Node<T> {
@@ -33,38 +36,43 @@ impl<T> Tree<T> {
             None => Err(TreeError::MissingCurrentNode),
         }
     }
+    pub fn create_new(&mut self, data: T, parent: Option<usize>, left: Option<usize>) -> usize {
+        match self.empty.pop() {
+            Some(old) => unsafe {
+                let node = self.nodes.get_unchecked_mut(old);
+                node.data = data;
+                old
+            },
+            None => {
+                self.nodes.push(NodeData {
+                    parent,
+                    left_sibling: None,
+                    right_sibling: None,
+                    first_children: None,
+                    last_children: None,
+                    data,
+                });
+                self.nodes.len()
+            }
+        }
+    }
 }
 
 // need debug
 pub struct NodeData<T> {
     parent: Option<usize>,
-    first_sibling: usize,
     left_sibling: Option<usize>,
     right_sibling: Option<usize>,
-    last_sibling: usize,
     first_children: Option<usize>,
     last_children: Option<usize>,
     data: T,
 }
 
-pub struct Ancestors<T> {
-    remember: Vec<Node<T>>,
-    current: usize,
-}
-
-impl<T> Iterator for Ancestors<T> {
-    type Item = Node<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-    }
-}
-
 impl<T> TreeNode<T> for Node<T> {
     type Ancestors = Ancestors<T>;
-    type Siblings = Ancestors<T>;
-    type Children = Ancestors<T>;
-    type Descendants = Ancestors<T>;
+    type Siblings = Siblings<T>;
+    type Children = Children<T>;
+    type Descendants = Descendants<T>;
 
     fn new(data: T, capacity: usize) -> Self {
         let mut nodes = Vec::with_capacity(capacity);
@@ -107,25 +115,20 @@ impl<T> TreeNode<T> for Node<T> {
         todo!()
     }
 
-    fn parent(&self) -> Result<Self, TreeError> {
-        let mut lock = match self.arena.lock() {
-            Ok(s) => {}
-            Err(_) => {}
+    fn parent(&self) -> Option<Self> {
+        let id = match self.arena.lock() {
+            Ok(s) => s.nodes.get(self.id)?.parent?,
+            Err(_) => None?,
         };
-        let raw = lock.get(self.id)?;
-        match raw.parent {
-            Some(s) => Ok(Self { id: s, arena: self.arena.clone() }),
-            None => Err(TreeError::MissingParentNode),
-        }
+        Some(Self { id, arena: self.arena.clone() })
     }
 
-    fn left(&self) -> Result<Self, TreeError> {
-        let mut lock = self.arena.lock()?;
-        let raw = lock.get(self.id)?;
-        match raw.left_sibling {
-            Some(s) => Ok(Self { id: s, arena: self.arena.clone() }),
-            None => Err(TreeError::MissingParentNode),
-        }
+    fn left(&self) -> Option<Self> {
+        let id = match self.arena.lock() {
+            Ok(s) => s.nodes.get(self.id)?.left_sibling?,
+            Err(_) => None?,
+        };
+        Some(Self { id, arena: self.arena.clone() })
     }
 
     fn first_sibling(&self) -> Result<Self, TreeError> {
@@ -134,13 +137,12 @@ impl<T> TreeNode<T> for Node<T> {
         Ok(Self { id: raw.first_sibling, arena: self.arena.clone() })
     }
 
-    fn right(&self) -> Result<Self, TreeError> {
-        let mut lock = self.arena.lock()?;
-        let raw = lock.get(self.id)?;
-        match raw.right_sibling {
-            Some(s) => Ok(Self { id: s, arena: self.arena.clone() }),
-            None => Err(TreeError::MissingParentNode),
-        }
+    fn right(&self) -> Option<Self> {
+        let id = match self.arena.lock() {
+            Ok(s) => s.nodes.get(self.id)?.right_sibling?,
+            Err(_) => None?,
+        };
+        Some(Self { id, arena: self.arena.clone() })
     }
 
     fn last_sibling(&self) -> Result<Self, TreeError> {
@@ -149,8 +151,19 @@ impl<T> TreeNode<T> for Node<T> {
         Ok(Self { id: raw.last_sibling, arena: self.arena.clone() })
     }
 
-    fn insert_after(&self, data: T, after: &Self) -> Self {
-        todo!()
+    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
+        let mut lock = self.arena.lock()?;
+        let mut old_left = lock.get(after.id)?;
+        match old_left.right_sibling {
+            Some(s) => {
+                let old_right = lock.get(s)?;
+                todo!()
+            }
+            None => {
+                let new = lock.create_new(data, old_left.parent, Some(after.id));
+                Ok(Self { id: new, arena: self.arena.clone() })
+            }
+        }
     }
 
     fn insert_before(&self, data: T, before: &Self) -> Self {
