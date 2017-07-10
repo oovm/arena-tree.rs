@@ -10,11 +10,13 @@ use std::{
     mem::{swap, take},
     sync::{Arc, Mutex},
 };
+use std::cell::RefCell;
+use std::rc::Rc;
 
 // need debug
 pub struct Node<T> {
     id: usize,
-    arena: Arc<Mutex<Tree<T>>>,
+    arena: Rc<RefCell<Tree<T>>>,
 }
 
 // need debug

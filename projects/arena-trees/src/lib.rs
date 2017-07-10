@@ -6,6 +6,7 @@
 
 mod errors;
 mod arc;
+mod rc;
 mod traits;
 
 pub use crate::errors::{TreeError, Result};
