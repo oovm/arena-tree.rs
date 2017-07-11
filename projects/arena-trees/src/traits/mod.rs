@@ -62,7 +62,7 @@ where
     fn last_sibling(&self) -> Result<Self, TreeError>;
 
     ///  Return new node
-    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError>;
+    fn insert_after(&self, data: T, after: &Self) -> Self;
 
     /// Return new node
     fn insert_before(&self, data: T, before: &Self) -> Self;
@@ -79,7 +79,7 @@ where
 
     fn insert_right(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Some(s) => s.insert_after(data, self),
+            Some(s) => Ok(s.insert_after(data, self)),
             None => Err(TreeError::RootSiblingOperation),
         }
     }

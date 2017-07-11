@@ -168,18 +168,18 @@ impl<T> TreeNode<T> for Node<T> {
         Ok(Self { id: first, arena: self.arena.clone() })
     }
 
-    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
-        let mut lock = self.arena.lock()?;
-        let old_left = lock.get(after.id)?;
+    fn insert_after(&self, data: T, after: &Self) -> Self {
+        let mut lock = self.arena.lock().unwrap();
+        let old_left = lock.get(after.id).unwrap();
         match old_left.right_sibling {
             Some(s) => {
-                let old_right = lock.get(s)?;
+                let old_right = lock.get(s).unwrap();
                 todo!()
             }
             None => {
                 let parent = old_left.parent;
                 let new = lock.create_new(data, parent, Some(after.id));
-                Ok(Self { id: new, arena: self.arena.clone() })
+                Self { id: new, arena: self.arena.clone() }
             }
         }
     }

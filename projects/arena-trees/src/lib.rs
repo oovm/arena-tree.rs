@@ -7,6 +7,7 @@
 mod errors;
 mod arc;
 mod rc;
+mod trees;
 mod traits;
 
 pub use crate::errors::{TreeError, Result};
