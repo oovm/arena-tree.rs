@@ -12,12 +12,14 @@ use std::{
 };
 
 // need debug
+#[derive(Debug)]
 pub struct Node<T> {
     id: usize,
     arena: Arc<Mutex<Tree<T>>>,
 }
 
 // need debug
+#[derive(Debug)]
 pub struct Tree<T> {
     nodes: Vec<NodeData<T>>,
     empty: Vec<usize>,
@@ -60,7 +62,7 @@ impl<T> Tree<T> {
     }
 }
 
-// need debug
+#[derive(Debug)]
 pub struct NodeData<T> {
     parent: Option<usize>,
     left_sibling: Option<usize>,

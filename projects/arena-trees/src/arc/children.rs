@@ -1,6 +1,7 @@
 use super::*;
 use std::iter::Rev;
 
+#[derive(Debug)]
 pub struct Ancestors<T> {
     remember: Vec<Node<T>>,
     current: usize,
@@ -13,6 +14,7 @@ impl<T> Iterator for Ancestors<T> {
         todo!()
     }
 }
+#[derive(Debug)]
 pub struct Siblings<T> {
     remember: Vec<Node<T>>,
     current: usize,
@@ -24,6 +26,7 @@ impl<T> Iterator for Siblings<T> {
         todo!()
     }
 }
+#[derive(Debug)]
 
 pub struct Children<T> {
     remember: Vec<Node<T>>,
@@ -36,6 +39,7 @@ impl<T> Iterator for Children<T> {
         todo!()
     }
 }
+#[derive(Debug)]
 pub struct Descendants<T> {
     remember: Vec<Node<T>>,
     current: usize,

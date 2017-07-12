@@ -5,9 +5,9 @@
 #![doc(html_favicon_url = "https://raw.githubusercontent.com/oovm/shape-rs/dev/projects/images/Trapezohedron.svg")]
 
 mod errors;
-mod arc;
-mod rc;
-mod trees;
+pub mod arc;
+pub mod rc;
+pub mod trees;
 mod traits;
 
 pub use crate::errors::{TreeError, Result};
