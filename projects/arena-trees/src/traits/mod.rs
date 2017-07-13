@@ -51,7 +51,7 @@ where
 
     fn left(&self) -> Option<Self>;
 
-    fn first_sibling(&self) -> Result<Self, TreeError>;
+    fn first_sibling(&self) -> Self;
 
     fn is_rightmost(&self) -> bool {
         self.right().is_none()
@@ -59,7 +59,7 @@ where
 
     fn right(&self) -> Option<Self>;
 
-    fn last_sibling(&self) -> Result<Self, TreeError>;
+    fn last_sibling(&self) -> Self;
 
     ///  Return new node
     fn insert_after(&self, data: T, after: &Self) -> Self;

@@ -142,14 +142,8 @@ impl<T> TreeNode<T> for Node<T> {
         Some(Self { id, arena: self.arena.clone() })
     }
 
-    fn first_sibling(&self) -> Result<Self, TreeError> {
-        let mut lock = self.arena.lock()?;
-        let first = unsafe {
-            let raw = lock.nodes.get_unchecked(self.id);
-            let parent = lock.get(raw.parent.unwrap_unchecked())?;
-            parent.first_child.unwrap_unchecked()
-        };
-        Ok(Self { id: first, arena: self.arena.clone() })
+    fn first_sibling(&self) -> Self {
+        todo!()
     }
 
     fn right(&self) -> Option<Self> {
@@ -160,14 +154,8 @@ impl<T> TreeNode<T> for Node<T> {
         Some(Self { id, arena: self.arena.clone() })
     }
 
-    fn last_sibling(&self) -> Result<Self, TreeError> {
-        let mut lock = self.arena.lock()?;
-        let first = unsafe {
-            let raw = lock.nodes.get_unchecked(self.id);
-            let parent = lock.get(raw.parent.unwrap_unchecked())?;
-            parent.last_child.unwrap_unchecked()
-        };
-        Ok(Self { id: first, arena: self.arena.clone() })
+    fn last_sibling(&self) -> Self {
+        todo!()
     }
 
     fn insert_after(&self, data: T, after: &Self) -> Self {

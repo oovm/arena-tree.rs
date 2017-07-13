@@ -1,17 +1,17 @@
 use std::slice::SliceIndex;
 
-type NodeID = usize;
+pub type NodeID = usize;
 
 mod links;
 mod arena;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct NodeArena<T> {
     pub(crate) nodes: Vec<NodeData<T>>,
     pub(crate) empty: Vec<NodeID>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct NodeData<T> {
     pub link: NodeLink,
     pub data: T,
