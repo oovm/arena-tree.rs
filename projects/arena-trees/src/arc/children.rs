@@ -1,5 +1,4 @@
 use super::*;
-use std::iter::Rev;
 
 #[derive(Debug)]
 pub struct Ancestors<T> {

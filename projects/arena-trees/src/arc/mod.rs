@@ -3,7 +3,7 @@ mod children;
 pub use self::children::{Ancestors, Children, Descendants, Siblings};
 
 use crate::{
-    traits::{DeleteNodes, TraversalOrder, TreeNode},
+    traits::{DeleteNodes, TraversalOrder, CreateTree},
     TreeError,
 };
 use std::{
@@ -81,7 +81,7 @@ impl<T> NodeData<T> {
     }
 }
 
-impl<T> TreeNode<T> for Node<T> {
+impl<T> CreateTree<T> for Node<T> {
     type Ancestors = Ancestors<T>;
     type Siblings = Siblings<T>;
     type Children = Children<T>;
@@ -122,7 +122,7 @@ impl<T> TreeNode<T> for Node<T> {
         Self { id: 0, arena: self.arena.clone() }
     }
 
-    fn ancestor(&self, with_self: usize) -> Self::Ancestors {
+    fn ancestor(&self, with_self: bool) -> Self::Ancestors {
         todo!()
     }
 
@@ -155,28 +155,17 @@ impl<T> TreeNode<T> for Node<T> {
     }
 
     fn last_sibling(&self) -> Self {
+            todo!()
+    }
+
+    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
         todo!()
     }
 
-    fn insert_after(&self, data: T, after: &Self) -> Self {
-        let mut lock = self.arena.lock().unwrap();
-        let old_left = lock.get(after.id).unwrap();
-        match old_left.right_sibling {
-            Some(s) => {
-                let old_right = lock.get(s).unwrap();
-                todo!()
-            }
-            None => {
-                let parent = old_left.parent;
-                let new = lock.create_new(data, parent, Some(after.id));
-                Self { id: new, arena: self.arena.clone() }
-            }
-        }
-    }
-
-    fn insert_before(&self, data: T, before: &Self) -> Self {
+    fn insert_before(&self, data: T, before: &Self) -> Result<Self, TreeError> {
         todo!()
     }
+
 
     fn children(&self, reverse: bool) -> Self::Children {
         todo!()
@@ -194,25 +183,6 @@ impl<T> TreeNode<T> for Node<T> {
         todo!()
     }
 
-    fn delete_current(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_left(&self, count: usize) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_right(&self, count: usize) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_siblings(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_children(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
-        todo!()
-    }
 }
 
 // test

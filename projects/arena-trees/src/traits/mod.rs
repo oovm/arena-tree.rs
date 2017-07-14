@@ -7,13 +7,13 @@ pub enum TraversalOrder {
 
 pub struct DeleteNodes<N, T>
 where
-    N: TreeNode<T>,
+    N: CreateTree<T>,
 {
     rest: Option<N>,
     data: Vec<T>,
 }
 
-pub trait TreeNode<T>
+pub trait CreateTree<T>
 where
     Self: Sized,
 {
@@ -37,7 +37,7 @@ where
 
     fn root(&self) -> Self;
 
-    fn ancestor(&self, with_self: usize) -> Self::Ancestors;
+    fn ancestor(&self, with_self: bool) -> Self::Ancestors;
 
     fn parent(&self) -> Option<Self>;
 
@@ -62,24 +62,24 @@ where
     fn last_sibling(&self) -> Self;
 
     ///  Return new node
-    fn insert_after(&self, data: T, after: &Self) -> Self;
+    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError>;
 
     /// Return new node
-    fn insert_before(&self, data: T, before: &Self) -> Self;
+    fn insert_before(&self, data: T, before: &Self) -> Result<Self, TreeError>;
 
     /// Insert data to the left of the node, it does not need to be the first node
     ///
     /// Return new node
     fn insert_left(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Some(s) => Ok(s.insert_before(data, self)),
+            Some(s) => s.insert_before(data, self),
             None => Err(TreeError::RootSiblingOperation),
         }
     }
 
     fn insert_right(&self, data: T) -> Result<Self, TreeError> {
         match self.parent() {
-            Some(s) => Ok(s.insert_after(data, self)),
+            Some(s) => s.insert_after(data, self),
             None => Err(TreeError::RootSiblingOperation),
         }
     }
@@ -108,9 +108,11 @@ where
     fn insert_child_right(&self, data: T) -> Self;
 
     fn descendants(&self, reverse: bool) -> Self::Descendants;
+}
 
+pub trait DeleteTree<T>: CreateTree<T> {
     /// Return parent and data
-    fn delete_current(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
+    fn delete_current(self, order: TraversalOrder) -> DeleteNodes<Self, T>;
 
     /// Delete all left
     fn delete_left(&self, count: usize) -> DeleteNodes<Self, T>;

@@ -32,12 +32,25 @@ impl<T> NodeArena<T> {
         let link = self.get(node).link;
         link.first_child.is_none() && link.last_child.is_none()
     }
-
-    pub fn get<I>(&self, index: I) -> &I::Output
-    where
-        I: SliceIndex<[NodeData<T>]>,
-    {
-        if cfg!(debug_assertions) { self.nodes.get(index).unwrap() } else { unsafe { self.nodes.get_unchecked(index) } }
+    pub fn contains(&self, node: NodeID) -> bool {
+        if self.empty.contains(&node) {
+            return false;
+        }
+        self.nodes.get(node).is_some()
+    }
+    pub fn get(&self, index: usize) -> &NodeData<T> {
+        if cfg!(debug_assertions) {
+            if self.empty.contains(&index) {
+                panic!("this node had been delete!")
+            }
+            match self.nodes.get(index) {
+                Some(s) => s,
+                None => panic!("this node does not exists!"),
+            }
+        }
+        else {
+            unsafe { self.nodes.get_unchecked(index) }
+        }
     }
 
     pub fn get_mut<I>(&mut self, index: I) -> &mut I::Output

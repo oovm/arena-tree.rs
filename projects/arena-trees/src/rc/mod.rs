@@ -1,26 +1,38 @@
+mod ancestors;
 mod children;
+mod descendants;
+mod siblings;
 
-pub use self::children::{Ancestors, Children, Descendants, Siblings};
+pub use self::{
+    ancestors::Ancestors,
+    children::{Children, Descendants},
+    siblings::Siblings,
+};
 
 use crate::{
-    traits::{DeleteNodes, TraversalOrder, TreeNode},
-    trees::{NodeArena, NodeData, NodeID, NodeLink},
+    traits::CreateTree,
+    trees::{NodeArena, NodeData, NodeLink},
     TreeError,
 };
 use std::{
     cell::RefCell,
     mem::{swap, take},
     rc::Rc,
-    sync::{Arc, Mutex},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Node<T> {
     id: usize,
     arena: Rc<RefCell<NodeArena<T>>>,
 }
 
-impl<T> TreeNode<T> for Node<T> {
+impl<T> Clone for Node<T> {
+    fn clone(&self) -> Self {
+        Self { id: self.id, arena: self.arena.clone() }
+    }
+}
+
+impl<T> CreateTree<T> for Node<T> {
     type Ancestors = Ancestors<T>;
     type Siblings = Siblings<T>;
     type Children = Children<T>;
@@ -54,8 +66,8 @@ impl<T> TreeNode<T> for Node<T> {
         Self { id: 0, arena: self.arena.clone() }
     }
 
-    fn ancestor(&self, with_self: usize) -> Self::Ancestors {
-        todo!()
+    fn ancestor(&self, with_self: bool) -> Self::Ancestors {
+        Ancestors { current: if with_self { Some(self.clone()) } else { self.parent() } }
     }
 
     fn parent(&self) -> Option<Self> {
@@ -102,9 +114,12 @@ impl<T> TreeNode<T> for Node<T> {
         }
     }
 
-    fn insert_after(&self, data: T, after: &Self) -> Self {
+    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
         let mut tree = self.arena.borrow_mut();
-        let parent_id = self.unchecked_parent();
+        let parent_id = match tree.get(self.id).link.parent {
+            Some(s) => s,
+            None => Err(TreeError::RootSiblingOperation)?,
+        };
         let left_id = after.id;
         let left_link = tree.get(left_id).link;
         let new_id = match left_link.right_sibling {
@@ -119,8 +134,8 @@ impl<T> TreeNode<T> for Node<T> {
                         last_child: None,
                     },
                 );
-                tree.get_mut(right_id).link.left_sibling = Some(new);
                 tree.get_mut(left_id).link.right_sibling = Some(new);
+                tree.get_mut(right_id).link.left_sibling = Some(new);
                 new
             }
             None => {
@@ -139,12 +154,15 @@ impl<T> TreeNode<T> for Node<T> {
                 new
             }
         };
-        Self { id: new_id, arena: self.arena.clone() }
+        Ok(Self { id: new_id, arena: self.arena.clone() })
     }
 
-    fn insert_before(&self, data: T, before: &Self) -> Self {
+    fn insert_before(&self, data: T, before: &Self) -> Result<Self, TreeError> {
         let mut tree = self.arena.borrow_mut();
-        let parent_id = self.unchecked_parent();
+        let parent_id = match tree.get(self.id).link.parent {
+            Some(s) => s,
+            None => Err(TreeError::RootSiblingOperation)?,
+        };
         let right_id = before.id;
         let right_link = tree.get(right_id).link;
         let new_id = match right_link.left_sibling {
@@ -179,7 +197,7 @@ impl<T> TreeNode<T> for Node<T> {
                 new
             }
         };
-        Self { id: new_id, arena: self.arena.clone() }
+        Ok(Self { id: new_id, arena: self.arena.clone() })
     }
 
     fn children(&self, reverse: bool) -> Self::Children {
@@ -206,22 +224,7 @@ impl<T> TreeNode<T> for Node<T> {
                 tree.get_mut(right_id).link.right_sibling = Some(new);
                 new
             }
-            None => {
-                let new = tree.create(
-                    data,
-                    NodeLink {
-                        parent: Some(parent_id),
-                        left_sibling: None,
-                        right_sibling: None,
-                        first_child: None,
-                        last_child: None,
-                    },
-                );
-                let parent_link = &mut tree.get_mut(parent_id).link;
-                parent_link.first_child = Some(new);
-                parent_link.last_child = Some(new);
-                new
-            }
+            None => tree.create_child(data, parent_id),
         };
         Self { id: new_id, arena: self.arena.clone() }
     }
@@ -246,47 +249,12 @@ impl<T> TreeNode<T> for Node<T> {
                 tree.get_mut(left_id).link.right_sibling = Some(new);
                 new
             }
-            None => {
-                let new = tree.create(
-                    data,
-                    NodeLink {
-                        parent: Some(parent_id),
-                        left_sibling: None,
-                        right_sibling: None,
-                        first_child: None,
-                        last_child: None,
-                    },
-                );
-                let parent_link = &mut tree.get_mut(parent_id).link;
-                parent_link.first_child = Some(new);
-                parent_link.last_child = Some(new);
-                new
-            }
+            None => tree.create_child(data, parent_id),
         };
         Self { id: new_id, arena: self.arena.clone() }
     }
 
     fn descendants(&self, reverse: bool) -> Self::Descendants {
-        todo!()
-    }
-
-    fn delete_current(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_left(&self, count: usize) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_right(&self, count: usize) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_siblings(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
-        todo!()
-    }
-
-    fn delete_children(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
         todo!()
     }
 }
