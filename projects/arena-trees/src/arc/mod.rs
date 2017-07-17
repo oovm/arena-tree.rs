@@ -3,13 +3,14 @@ mod children;
 pub use self::children::{Ancestors, Children, Descendants, Siblings};
 
 use crate::{
-    traits::{DeleteNodes, TraversalOrder, CreateTree},
+    traits::{DeleteNodes, TraversalOrder},
     TreeError,
 };
 use std::{
     mem::{swap, take},
     sync::{Arc, Mutex},
 };
+use crate::traits::QueryNode;
 
 // need debug
 #[derive(Debug)]
@@ -81,7 +82,7 @@ impl<T> NodeData<T> {
     }
 }
 
-impl<T> CreateTree<T> for Node<T> {
+impl<T> QueryNode<T> for Node<T> {
     type Ancestors = Ancestors<T>;
     type Siblings = Siblings<T>;
     type Children = Children<T>;
@@ -100,19 +101,6 @@ impl<T> CreateTree<T> for Node<T> {
         Self { id: 0, arena: Arc::new(Mutex::new(Tree { nodes, empty: vec![] })) }
     }
 
-    fn take(&self) -> Result<T, TreeError>
-    where
-        T: Default,
-    {
-        let mut lock = self.arena.lock()?;
-        let raw = lock.nodes.get_mut(self.id).unwrap();
-        Ok(take(&mut raw.data))
-    }
-    fn swap(&self, data: &mut T) {
-        let mut lock = self.arena.lock().unwrap();
-        let raw = lock.nodes.get_mut(self.id).unwrap();
-        swap(&mut raw.data, data)
-    }
 
     fn is_root(&self) -> bool {
         self.id.eq(&0)
@@ -134,7 +122,7 @@ impl<T> CreateTree<T> for Node<T> {
         Some(Self { id, arena: self.arena.clone() })
     }
 
-    fn left(&self) -> Option<Self> {
+    fn left_sibling(&self) -> Option<Self> {
         let id = match self.arena.lock() {
             Ok(s) => s.nodes.get(self.id)?.left_sibling?,
             Err(_) => None?,
@@ -142,11 +130,15 @@ impl<T> CreateTree<T> for Node<T> {
         Some(Self { id, arena: self.arena.clone() })
     }
 
+    fn left_siblings(&self, include_self: bool) -> Self::Siblings {
+        todo!()
+    }
+
     fn first_sibling(&self) -> Self {
         todo!()
     }
 
-    fn right(&self) -> Option<Self> {
+    fn right_sibling(&self) -> Option<Self> {
         let id = match self.arena.lock() {
             Ok(s) => s.nodes.get(self.id)?.right_sibling?,
             Err(_) => None?,
@@ -154,15 +146,15 @@ impl<T> CreateTree<T> for Node<T> {
         Some(Self { id, arena: self.arena.clone() })
     }
 
+    fn right_siblings(&self, include_self: bool) -> Self::Siblings {
+        todo!()
+    }
+
     fn last_sibling(&self) -> Self {
             todo!()
     }
 
-    fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
-        todo!()
-    }
-
-    fn insert_before(&self, data: T, before: &Self) -> Result<Self, TreeError> {
+    fn siblings(&self, reverse: bool) -> Self::Siblings {
         todo!()
     }
 
@@ -171,13 +163,6 @@ impl<T> CreateTree<T> for Node<T> {
         todo!()
     }
 
-    fn insert_child_left(&self, data: T) -> Self {
-        todo!()
-    }
-
-    fn insert_child_right(&self, data: T) -> Self {
-        todo!()
-    }
 
     fn descendants(&self, reverse: bool) -> Self::Descendants {
         todo!()

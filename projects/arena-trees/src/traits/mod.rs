@@ -7,13 +7,13 @@ pub enum TraversalOrder {
 
 pub struct DeleteNodes<N, T>
 where
-    N: CreateTree<T>,
+    N: QueryNode<T>,
 {
     rest: Option<N>,
     data: Vec<T>,
 }
 
-pub trait CreateTree<T>
+pub trait QueryNode<T>
 where
     Self: Sized,
 {
@@ -24,12 +24,6 @@ where
 
     /// Create a tree based on the given root node and capacity
     fn new(data: T, capacity: usize) -> Self;
-
-    fn take(&self) -> Result<T, TreeError>
-    where
-        T: Default;
-
-    fn swap(&self, data: &mut T);
 
     fn is_root(&self) -> bool {
         self.parent().is_none()
@@ -42,24 +36,58 @@ where
     fn parent(&self) -> Option<Self>;
 
     fn is_alone(&self) -> bool {
-        self.left().is_none() && self.right().is_none()
+        self.left_sibling().is_none() && self.right_sibling().is_none()
     }
 
     fn is_leftmost(&self) -> bool {
-        self.left().is_none()
+        self.left_sibling().is_none()
     }
 
-    fn left(&self) -> Option<Self>;
+    fn left_sibling(&self) -> Option<Self>;
+
+    fn left_siblings(&self, include_self: bool) -> Self::Siblings;
 
     fn first_sibling(&self) -> Self;
 
     fn is_rightmost(&self) -> bool {
-        self.right().is_none()
+        self.right_sibling().is_none()
     }
 
-    fn right(&self) -> Option<Self>;
+    fn right_sibling(&self) -> Option<Self>;
+
+    fn right_siblings(&self, include_self: bool) -> Self::Siblings;
 
     fn last_sibling(&self) -> Self;
+
+    fn siblings(&self, reverse: bool) -> Self::Siblings;
+
+    fn has_child(&self) -> bool {
+        self.first_child().is_some()
+    }
+
+    fn first_child(&self) -> Option<Self> {
+        self.children(false).next()
+    }
+
+    fn last_child(&self) -> Option<Self> {
+        self.children(true).next()
+    }
+
+    fn count_children(&self) -> usize {
+        self.children(false).count()
+    }
+
+    fn children(&self, reverse: bool) -> Self::Children;
+
+    fn descendants(&self, reverse: bool) -> Self::Descendants;
+}
+
+pub trait MutateNode<T>: QueryNode<T> {
+    fn take(&self) -> Result<T, TreeError>
+    where
+        T: Default;
+
+    fn swap(&self, data: &mut T);
 
     ///  Return new node
     fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError>;
@@ -83,23 +111,6 @@ where
             None => Err(TreeError::RootSiblingOperation),
         }
     }
-    fn has_child(&self) -> bool {
-        self.first_child().is_some()
-    }
-
-    fn first_child(&self) -> Option<Self> {
-        self.children(false).next()
-    }
-
-    fn last_child(&self) -> Option<Self> {
-        self.children(true).next()
-    }
-
-    fn count_children(&self) -> usize {
-        self.children(false).count()
-    }
-
-    fn children(&self, reverse: bool) -> Self::Children;
 
     ///  Return new node
     fn insert_child_left(&self, data: T) -> Self;
@@ -107,10 +118,6 @@ where
     ///  Return new node
     fn insert_child_right(&self, data: T) -> Self;
 
-    fn descendants(&self, reverse: bool) -> Self::Descendants;
-}
-
-pub trait DeleteTree<T>: CreateTree<T> {
     /// Return parent and data
     fn delete_current(self, order: TraversalOrder) -> DeleteNodes<Self, T>;
 

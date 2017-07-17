@@ -10,7 +10,7 @@ pub use self::{
 };
 
 use crate::{
-    traits::CreateTree,
+    traits::{DeleteNodes, MutateNode, QueryNode, TraversalOrder},
     trees::{NodeArena, NodeData, NodeLink},
     TreeError,
 };
@@ -32,30 +32,16 @@ impl<T> Clone for Node<T> {
     }
 }
 
-impl<T> CreateTree<T> for Node<T> {
+impl<T> QueryNode<T> for Node<T> {
     type Ancestors = Ancestors<T>;
     type Siblings = Siblings<T>;
-    type Children = Children<T>;
+    type Children = Siblings<T>;
     type Descendants = Descendants<T>;
 
     fn new(data: T, capacity: usize) -> Self {
         let mut nodes = Vec::with_capacity(capacity);
         nodes.push(NodeData { link: NodeLink::default(), data });
         Self { id: 0, arena: Rc::new(RefCell::new(NodeArena { nodes, empty: vec![] })) }
-    }
-
-    fn take(&self) -> Result<T, TreeError>
-    where
-        T: Default,
-    {
-        let mut lock = self.arena.borrow_mut();
-        let raw = lock.nodes.get_mut(self.id).unwrap();
-        Ok(take(&mut raw.data))
-    }
-    fn swap(&self, data: &mut T) {
-        let mut lock = self.arena.borrow_mut();
-        let raw = lock.nodes.get_mut(self.id).unwrap();
-        swap(&mut raw.data, data)
     }
 
     fn is_root(&self) -> bool {
@@ -74,10 +60,19 @@ impl<T> CreateTree<T> for Node<T> {
         if self.is_root() { None } else { Some(Self { id: self.unchecked_parent(), arena: self.arena.clone() }) }
     }
 
-    fn left(&self) -> Option<Self> {
+    fn left_sibling(&self) -> Option<Self> {
         let tree = self.arena.borrow_mut();
         let left = tree.get(self.id).link.left_sibling?;
         Some(Self { id: left, arena: self.arena.clone() })
+    }
+
+    fn left_siblings(&self, include_self: bool) -> Self::Siblings {
+        if include_self {
+            Siblings { current: Some(self.clone()), reversed: true }
+        }
+        else {
+            Siblings { current: self.left_sibling(), reversed: true }
+        }
     }
 
     fn first_sibling(&self) -> Self {
@@ -94,10 +89,19 @@ impl<T> CreateTree<T> for Node<T> {
         }
     }
 
-    fn right(&self) -> Option<Self> {
+    fn right_sibling(&self) -> Option<Self> {
         let tree = self.arena.borrow_mut();
         let right = tree.get(self.id).link.right_sibling?;
         Some(Self { id: right, arena: self.arena.clone() })
+    }
+
+    fn right_siblings(&self, include_self: bool) -> Self::Siblings {
+        if include_self {
+            Siblings { current: Some(self.clone()), reversed: false }
+        }
+        else {
+            Siblings { current: self.right_sibling(), reversed: false }
+        }
     }
 
     fn last_sibling(&self) -> Self {
@@ -112,6 +116,44 @@ impl<T> CreateTree<T> for Node<T> {
                 Self { id: right, arena: self.arena.clone() }
             }
         }
+    }
+
+    fn siblings(&self, reverse: bool) -> Self::Siblings {
+        if reverse {
+            Siblings { current: Some(self.last_sibling()), reversed: true }
+        }
+        else {
+            Siblings { current: Some(self.first_sibling()), reversed: false }
+        }
+    }
+
+    fn children(&self, reverse: bool) -> Self::Children {
+        if reverse {
+            Siblings { current: self.last_child(), reversed: true }
+        }
+        else {
+            Siblings { current: self.first_child(), reversed: false }
+        }
+    }
+
+    fn descendants(&self, reverse: bool) -> Self::Descendants {
+        todo!()
+    }
+}
+
+impl<T> MutateNode<T> for Node<T> {
+    fn take(&self) -> Result<T, TreeError>
+    where
+        T: Default,
+    {
+        let mut lock = self.arena.borrow_mut();
+        let raw = lock.nodes.get_mut(self.id).unwrap();
+        Ok(take(&mut raw.data))
+    }
+    fn swap(&self, data: &mut T) {
+        let mut lock = self.arena.borrow_mut();
+        let raw = lock.nodes.get_mut(self.id).unwrap();
+        swap(&mut raw.data, data)
     }
 
     fn insert_after(&self, data: T, after: &Self) -> Result<Self, TreeError> {
@@ -199,11 +241,6 @@ impl<T> CreateTree<T> for Node<T> {
         };
         Ok(Self { id: new_id, arena: self.arena.clone() })
     }
-
-    fn children(&self, reverse: bool) -> Self::Children {
-        todo!()
-    }
-
     fn insert_child_left(&self, data: T) -> Self {
         let mut tree = self.arena.borrow_mut();
         let parent_id = self.id;
@@ -254,7 +291,23 @@ impl<T> CreateTree<T> for Node<T> {
         Self { id: new_id, arena: self.arena.clone() }
     }
 
-    fn descendants(&self, reverse: bool) -> Self::Descendants {
+    fn delete_current(self, order: TraversalOrder) -> DeleteNodes<Self, T> {
+        todo!()
+    }
+
+    fn delete_left(&self, count: usize) -> DeleteNodes<Self, T> {
+        todo!()
+    }
+
+    fn delete_right(&self, count: usize) -> DeleteNodes<Self, T> {
+        todo!()
+    }
+
+    fn delete_siblings(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
+        todo!()
+    }
+
+    fn delete_children(&self, order: TraversalOrder) -> DeleteNodes<Self, T> {
         todo!()
     }
 }
