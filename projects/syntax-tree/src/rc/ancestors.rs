@@ -1,12 +1,12 @@
 use super::*;
 
 #[derive(Debug)]
-pub struct Ancestors<T> {
-    pub(crate) current: Option<Node<T>>,
+pub struct SyntaxAncestors {
+    pub(crate) current: Option<SyntaxNode>,
 }
 
-impl<T> Iterator for Ancestors<T> {
-    type Item = Node<T>;
+impl Iterator for SyntaxAncestors {
+    type Item = SyntaxNode;
 
     fn next(&mut self) -> Option<Self::Item> {
         let out = self.current.take()?;

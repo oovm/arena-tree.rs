@@ -5,15 +5,7 @@ pub enum TraversalOrder {
     BreadthFirst,
 }
 
-pub struct DeleteNodes<N, T>
-where
-    N: QueryNode<T>,
-{
-    rest: Option<N>,
-    data: Vec<T>,
-}
-
-pub trait QueryNode<T>
+pub trait Node<T>
 where
     Self: Sized,
 {
@@ -82,7 +74,7 @@ where
     fn descendants(&self, reverse: bool) -> Self::Descendants;
 }
 
-pub trait MutateNode<T>: QueryNode<T> {
+pub trait MutateNode<T>: Node<T> {
     fn take(&self) -> Result<T, TreeError>
     where
         T: Default;
@@ -119,16 +111,16 @@ pub trait MutateNode<T>: QueryNode<T> {
     fn insert_child_right(&self, data: T) -> Self;
 
     /// Return parent and data
-    fn delete_current(self, order: TraversalOrder) -> DeleteNodes<Self, T>;
+    fn delete_current(self, order: TraversalOrder);
 
     /// Delete all left
-    fn delete_left(&self, count: usize) -> DeleteNodes<Self, T>;
+    fn delete_left(&self, count: usize);
 
-    fn delete_right(&self, count: usize) -> DeleteNodes<Self, T>;
+    fn delete_right(&self, count: usize);
 
     /// Delete all sibling or lower-level nodes
-    fn delete_siblings(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
+    fn delete_siblings(&self, order: TraversalOrder);
 
     /// Delete all low-level nodes
-    fn delete_children(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
+    fn delete_children(&self, order: TraversalOrder);
 }

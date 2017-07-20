@@ -12,8 +12,8 @@ impl NodeLink {
     pub fn new(parent: NodeID) -> Self {
         Self {
             parent: Some(parent),
-            left_sibling: None,
-            right_sibling: None,
+            left: None,
+            right: None,
             first_child: None,
             last_child: None,
         }
@@ -29,7 +29,7 @@ impl NodeLink {
     /// A new `Node` instance with the given parent and left sibling node IDs, and default values for the other fields.
     pub fn with_sibling_left(self, sibling: NodeID) -> Self {
         Self {
-            left_sibling: Some(sibling),
+            left: Some(sibling),
             ..self
         }
     }
@@ -43,7 +43,7 @@ impl NodeLink {
     /// A new `Node` instance with the given parent node ID and no left sibling, and default values for the other fields.
     pub fn without_sibling_left(self) -> Self {
         Self {
-            left_sibling: None,
+            left: None,
             ..self
         }
     }
@@ -58,7 +58,7 @@ impl NodeLink {
     /// A new `Node` instance with the given parent and right sibling node IDs, and default values for the other fields.
     pub fn with_sibling_right(self, sibling: NodeID) -> Self {
         Self {
-            right_sibling: Some(sibling),
+            right: Some(sibling),
             ..self
         }
     }
@@ -72,7 +72,7 @@ impl NodeLink {
     /// A new `Node` instance with the given parent node ID and no right sibling, and default values for the other fields.
     pub fn without_sibling_right(self) -> Self {
         Self {
-            right_sibling: None,
+            right: None,
             ..self
         }
     }
