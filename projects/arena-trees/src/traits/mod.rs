@@ -1,18 +1,35 @@
-use crate::arc::ArcNode;
+use crate::TreeError;
 
-pub enum TreeError {
-    /// Try to append sibling nodes to the root node
-    RootSiblingNode,
+pub enum TraversalOrder {
+    DepthFirst,
+    BreadthFirst,
 }
 
-pub trait Node<T>
+pub struct DeleteNodes<N, T>
+where
+    N: TreeNode<T>,
+{
+    rest: Option<N>,
+    data: Vec<T>,
+}
+
+pub trait TreeNode<T>
 where
     Self: Sized,
 {
-    type Ancestor: Iterator<Item = Self>;
+    type Ancestors: Iterator<Item = Self>;
+    type Siblings: Iterator<Item = Self>;
+    type Children: Iterator<Item = Self>;
+    type Descendants: Iterator<Item = Self>;
 
     /// Create a tree based on the given root node and capacity
     fn new(data: T, capacity: usize) -> Self;
+
+    fn take(&self)
+    where
+        T: Default;
+
+    fn swap(&self, data: T);
 
     fn is_root(&self) -> bool {
         self.parent().is_none()
@@ -20,17 +37,35 @@ where
 
     fn root(&self) -> Self;
 
-    fn ancestor(&self, with_self: usize) -> Self::Ancestor;
+    fn ancestor(&self, with_self: usize) -> Self::Ancestors;
 
     fn parent(&self) -> Option<Self>;
 
-    fn is_leftmost(&self) -> bool;
+    fn is_alone(&self) -> bool {
+        self.left().is_none() && self.right().is_none()
+    }
 
-    fn is_rightmost(&self) -> bool;
+    fn is_leftmost(&self) -> bool {
+        self.left().is_none()
+    }
 
-    fn leftmost(&self) -> Self;
+    fn left(&self) -> Option<Self>;
 
-    fn rightmost(&self) -> Self;
+    fn first_sibling(&self) -> Self;
+
+    fn is_rightmost(&self) -> bool {
+        self.right().is_none()
+    }
+
+    fn right(&self) -> Option<Self>;
+
+    fn last_sibling(&self) -> Self;
+
+    ///  Return new node
+    fn insert_after(&self, data: T, after: &Self) -> Self;
+
+    /// Return new node
+    fn insert_before(&self, data: T, before: &Self) -> Self;
 
     /// Insert data to the left of the node, it does not need to be the first node
     ///
@@ -48,25 +83,43 @@ where
             None => Err(TreeError::RootSiblingNode),
         }
     }
+    fn has_child(&self) -> bool {
+        self.first_child().is_some()
+    }
+
+    fn first_child(&self) -> Option<Self> {
+        self.children(false).next()
+    }
+
+    fn last_child(&self) -> Option<Self> {
+        self.children(true).next()
+    }
+
+    fn count_children(&self) -> usize {
+        self.children(false).count()
+    }
+
+    fn children(&self, reverse: bool) -> Self::Children;
 
     ///  Return new node
-    fn insert_child_left(&self, data: &T) -> Self;
+    fn insert_child_left(&self, data: T) -> Self;
 
     ///  Return new node
-    fn insert_child_right(&self, data: &T) -> Self;
+    fn insert_child_right(&self, data: T) -> Self;
 
-    ///  Return new node
-    fn insert_after(&self, data: T, after: &Self) -> Self;
-
-    /// Return new node
-    fn insert_before(&self, data: T, before: &Self) -> Self;
+    fn descendants(&self, reverse: bool) -> Self::Descendants;
 
     /// Return parent and data
-    fn delete_current(&self) -> (Option<Self>, T);
+    fn delete_current(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
 
     /// Delete all left
-    fn delete_left(&self, count: usize) -> Vec<T>;
+    fn delete_left(&self, count: usize) -> DeleteNodes<Self, T>;
 
-    fn delete_right(&self, count: usize) -> Vec<T>;
-    fn delete_children(&self) -> Option<ArcNode<T>>;
+    fn delete_right(&self, count: usize) -> DeleteNodes<Self, T>;
+
+    /// Delete all sibling or lower-level nodes
+    fn delete_siblings(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
+
+    /// Delete all low-level nodes
+    fn delete_children(&self, order: TraversalOrder) -> DeleteNodes<Self, T>;
 }
