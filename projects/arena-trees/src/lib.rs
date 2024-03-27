@@ -6,5 +6,6 @@
 
 mod errors;
 mod arc;
+mod traits;
 
 pub use crate::errors::{Error, Result};
